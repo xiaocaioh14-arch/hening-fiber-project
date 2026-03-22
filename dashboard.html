@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的站点管理</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0f1117;
+    color: #e1e4e8;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #21262d;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #f0f3f6;
+  }
+  .header .stats {
+    display: flex;
+    gap: 20px;
+    font-size: 13px;
+    color: #8b949e;
+  }
+  .header .stats span {
+    background: #161b22;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid #21262d;
+  }
+  .header .stats .num { color: #58a6ff; font-weight: 600; }
+
+  .search-bar {
+    width: 100%;
+    padding: 10px 16px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    color: #e1e4e8;
+    font-size: 14px;
+    margin-bottom: 24px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-bar:focus { border-color: #58a6ff; }
+  .search-bar::placeholder { color: #484f58; }
+
+  .tags-filter {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .tag-btn {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid #30363d;
+    background: transparent;
+    color: #8b949e;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tag-btn:hover, .tag-btn.active {
+    background: #1f6feb22;
+    border-color: #58a6ff;
+    color: #58a6ff;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+  .card:hover {
+    border-color: #388bfd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(56,139,253,0.1);
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #58a6ff;
+  }
+  .card-status {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+  .status-live {
+    background: #23863622;
+    color: #3fb950;
+    border: 1px solid #23863644;
+  }
+  .status-private {
+    background: #da360b22;
+    color: #f0883e;
+    border: 1px solid #da360b44;
+  }
+  .status-draft {
+    background: #8b949e22;
+    color: #8b949e;
+    border: 1px solid #8b949e44;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: #8b949e;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .card-url {
+    font-size: 12px;
+    color: #484f58;
+    word-break: break-all;
+    margin-bottom: 14px;
+    padding: 8px 12px;
+    background: #0d1117;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card-url a {
+    color: #58a6ff;
+    text-decoration: none;
+  }
+  .card-url a:hover { text-decoration: underline; }
+  .copy-btn {
+    background: #21262d;
+    border: none;
+    color: #8b949e;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .copy-btn:hover { color: #e1e4e8; background: #30363d; }
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .card-tag {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    background: #1f6feb18;
+    color: #58a6ff;
+    border: 1px solid #1f6feb33;
+  }
+  .card-tag.tag-infra { background: #da360b18; color: #f0883e; border-color: #da360b33; }
+  .card-tag.tag-data { background: #23863618; color: #3fb950; border-color: #23863633; }
+  .card-tag.tag-tool { background: #a371f718; color: #bc8cff; border-color: #a371f733; }
+  .card-tag.tag-blog { background: #db614718; color: #db6147; border-color: #db614733; }
+
+  .card-date {
+    font-size: 11px;
+    color: #484f58;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 60px;
+    color: #484f58;
+    font-size: 14px;
+  }
+
+  @media (max-width: 768px) {
+    .grid { grid-template-columns: 1fr; }
+    body { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>My Sites</h1>
+  <div class="stats">
+    <span><span class="num">6</span> 个站点</span>
+    <span><span class="num" style="color:#3fb950">4</span> 已上线</span>
+    <span><span class="num" style="color:#f0883e">1</span> 私有</span>
+    <span><span class="num" style="color:#8b949e">1</span> 草稿</span>
+  </div>
+</div>
+
+<input class="search-bar" type="text" placeholder="搜索站点名称、描述、标签..." id="searchInput">
+
+<div class="tags-filter">
+  <button class="tag-btn active" data-tag="all">全部</button>
+  <button class="tag-btn" data-tag="项目文档">项目文档</button>
+  <button class="tag-btn" data-tag="数据采集">数据采集</button>
+  <button class="tag-btn" data-tag="工具">工具</button>
+  <button class="tag-btn" data-tag="博客">博客</button>
+</div>
+
+<div class="grid" id="siteGrid">
+
+  <div class="card" data-tags="项目文档">
+    <div class="card-header">
+      <div class="card-title">📡 合宁光缆项目管理</div>
+      <span class="card-status status-live">已上线</span>
+    </div>
+    <div class="card-desc">合肥-南京高铁光缆项目全流程管理文档，166km，6阶段18-24个月</div>
+    <div class="card-url">
+      <a href="https://xiaocaioh14-arch.github.io/hening-fiber-project/" target="_blank">xiaocaioh14-arch.github.io/hening-fiber-project</a>
+      <button class="copy-btn" onclick="copyUrl(this)">复制</button>
+    </div>
+    <div class="card-footer">
+      <div class="card-tags">
+        <span class="card-tag tag-infra">基础设施</span>
+        <span class="card-tag">项目文档</span>
+      </div>
+      <span class="card-date">更新于 2026-03-21</span>
+    </div>
+  </div>
+
+  <div class="card" data-tags="数据采集">
+    <div class="card-header">
+      <div class="card-title">🔥 微博热搜采集</div>
+      <span class="card-status status-live">已上线</span>
+    </div>
+    <div class="card-desc">每日自动采集微博热搜话题，自动化 Workflow 定时运行</div>
+    <div class="card-url">
+      <a href="https://xiaocaioh14-arch.github.io/weibo-hot/" target="_blank">xiaocaioh14-arch.github.io/weibo-hot</a>
+      <button class="copy-btn" onclick="copyUrl(this)">复制</button>
+    </div>
+    <div class="card-footer">
+      <div class="card-tags">
+        <span class="card-tag tag-data">数据采集</span>
+        <span class="card-tag">HTML</span>
+      </div>
+      <span class="card-date">更新于 2026-03-18</span>
+    </div>
+  </div>
+
+  <div class="card" data-tags="数据采集">
+    <div class="card-header">
+      <div class="card-title">🛒 海淘热榜 Top10</div>
+      <span class="card-status status-live">已上线</span>
+    </div>
+    <div class="card-desc">每日抓取海外电商平台热销 Top10 商品，自动生成页面</div>
+    <div class="card-url">
+      <a href="https://xiaocaioh14-arch.github.io/hot-picks/" target="_blank">xiaocaioh14-arch.github.io/hot-picks</a>
+      <button class="copy-btn" onclick="copyUrl(this)">复制</button>
+    </div>
+    <div class="card-footer">
+      <div class="card-tags">
+        <span class="card-tag tag-data">数据采集</span>
+        <span class="card-tag">HTML</span>
+      </div>
+      <span class="card-date">更新于 2026-03-15</span>
+    </div>
+  </div>
+
+  <div class="card" data-tags="工具">
+    <div class="card-header">
+      <div class="card-title">🏢 IDC 机房巡检评估</div>
+      <span class="card-status status-live">已上线</span>
+    </div>
+    <div class="card-desc">IDC 机房巡检评估标准工具，组织巡检报告，Python 后端</div>
+    <div class="card-url">
+      <a href="https://github.com/xiaocaioh14-arch/idc-inspection" target="_blank">github.com/xiaocaioh14-arch/idc-inspection</a>
+      <button class="copy-btn" onclick="copyUrl(this)">复制</button>
+    </div>
+    <div class="card-footer">
+      <div class="card-tags">
+        <span class="card-tag tag-tool">工具</span>
+        <span class="card-tag">Python</span>
+      </div>
+      <span class="card-date">更新于 2026-03-10</span>
+    </div>
+  </div>
+
+  <div class="card" data-tags="博客">
+    <div class="card-header">
+      <div class="card-title">📖 我的博客</div>
+      <span class="card-status status-draft">草稿</span>
+    </div>
+    <div class="card-desc">个人博客站点，Python 构建</div>
+    <div class="card-url">
+      <a href="https://xiaocaioh14-arch.github.io/myblog/" target="_blank">xiaocaioh14-arch.github.io/myblog</a>
+      <button class="copy-btn" onclick="copyUrl(this)">复制</button>
+    </div>
+    <div class="card-footer">
+      <div class="card-tags">
+        <span class="card-tag tag-blog">博客</span>
+        <span class="card-tag">Python</span>
+      </div>
+      <span class="card-date">更新于 2026-01-12</span>
+    </div>
+  </div>
+
+  <div class="card" data-tags="工具">
+    <div class="card-header">
+      <div class="card-title">🧠 Skill META Model</div>
+      <span class="card-status status-private">私有</span>
+    </div>
+    <div class="card-desc">元认知能力的元工具，分析和更新 Skill 文档的 META 模型</div>
+    <div class="card-url">
+      <a href="https://github.com/xiaocaioh14-arch/Skill-META-Model" target="_blank">github.com/xiaocaioh14-arch/Skill-META-Model</a>
+      <button class="copy-btn" onclick="copyUrl(this)">复制</button>
+    </div>
+    <div class="card-footer">
+      <div class="card-tags">
+        <span class="card-tag tag-tool">工具</span>
+        <span class="card-tag">Claude Code</span>
+      </div>
+      <span class="card-date">更新于 2026-02-20</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function copyUrl(btn) {
+  const url = btn.previousElementSibling.href;
+  navigator.clipboard.writeText(url).then(() => {
+    btn.textContent = '已复制!';
+    setTimeout(() => btn.textContent = '复制', 1500);
+  });
+}
+
+// Search
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  const q = e.target.value.toLowerCase();
+  document.querySelectorAll('.card').forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.style.display = text.includes(q) ? '' : 'none';
+  });
+});
+
+// Tag filter
+document.querySelectorAll('.tag-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const tag = this.dataset.tag;
+    document.querySelectorAll('.card').forEach(card => {
+      if (tag === 'all') { card.style.display = ''; return; }
+      card.style.display = card.dataset.tags.includes(tag) ? '' : 'none';
+    });
+  });
+});
+</script>
+
+</body>
+</html>
